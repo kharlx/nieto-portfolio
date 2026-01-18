@@ -1,0 +1,41 @@
+import express from "express";
+import cors from "cors";
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+app.post("/chat", async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    const response = await axios.post(
+      "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      {
+        model: "gemini-2.5-flash", // free tier model
+        messages: [{ role: "user", content: message }],
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const reply = response.data.choices[0].message.content;
+    res.json({ reply });
+
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ reply: "Sorry, something went wrong with the AI." });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
